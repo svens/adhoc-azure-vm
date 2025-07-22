@@ -1,0 +1,65 @@
+#cloud-config
+
+ssh_pwauth: no
+
+package_upgrade: true
+packages:
+- build-essential
+- cmake
+- git
+- ninja-build
+- tmux
+- universal-ctags
+- vim
+- zsh
+
+write_files:
+- path: /etc/skel/.env
+  content: |
+    export EDITOR=vim
+    export PAGER=less
+    export LESS="-R -M -X -F --shift 5"
+    export LANG="en_US.UTF-8"
+    export LC_COLLATE=POSIX
+    export LC_TIME=POSIX
+    export LS_COLORS="di=00;36:ln=01;35:so=01;35:pi=40;33:ex=01;32:bd=40;33:cd=40;33:su=37;41:sg=30;43:tw=30;42:ow=34;42"
+    export GCC_COLORS="error=01;31:warning=01;35:note=01;36:caret=01;32:locus=32:quote=01"
+- path: /etc/skel/.aliases
+  content: |
+    alias ls="ls --color=auto"
+    alias l='ls -laF'
+    alias ll='ls -lF'
+    alias lt='ll -t'
+    alias -- +='pushd'
+    alias -- -='popd'
+    alias -- ..='cd ..'
+    alias -- ...='cd ../..'
+- path: /etc/skel/.zshrc
+  content: |
+    [ -f ~/.env ] && source ~/.env
+    [ -f ~/.aliases ] && source ~/.aliases
+
+    autoload -U colors && colors
+    [ -z "$SSH_CONNECTION" ] && pc=$reset_color || pc=$fg[cyan]
+    PROMPT="%{$fg[green]%}%~%{$reset_color%} %{$pc%}%(#.#.$)%{$reset_color%} "
+
+    # history
+    setopt hist_ignore_all_dups
+    setopt hist_ignore_space
+    export HISTFILE=~/.histfile
+    export HISTSIZE=2000
+    export SAVEHIST=$HISTSIZE
+
+    # keys & completion
+    bindkey -e
+    bindkey ^U backward-kill-line
+    autoload -U compinit && compinit
+    setopt no_auto_menu
+    zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}'
+
+users:
+- name: sven
+  shell: /bin/zsh
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC40nYrYxcpRNCnN9pnn1G3I+Thng7N+EXdnww59eUrvn7GrksLBY+yxBnOaPPp0v7oq/vcYo87xKT/qZ5+TrrQXYIjQvrf9YPLamw+919RCZaeVlhy6Kco3seKc9NlktZZwMsGlBHf6Oi0NtIFmdBLF0C1dNeADN81YqNJh3Jv3Ee6GsZvr0h1A5B30KEZeqPqj6OU+LNHTzWcmelmaDjhKaqD0QkurfeJ3nXURfSeOERgkZ5woclxtUicCnd5nn1fYYClH+U/7pzVvnQGgcZKa13A4FqchvswoNhVLMvBxzmNDx0r/E6lfbKXS4WPrHl0AKhrsLUm3QEyzprAP7MWrhznmtSIrdCMhlQ/4QnjxmlRS7ZrBduUjd66Mx/xtWOJqaZPBcKpD+OzCmZ+QLH4HU3az8XmpgO14PwPWTzxKB3Fe8vc5Q4p1qFlMsNNmuszlUUtm6F6uXkwqjozVWxNXKpGiJv2wi2va7pOCvpxpg8HmuCzeMtVzI2cqoeDl6U=
