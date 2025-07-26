@@ -1,12 +1,15 @@
 param location string
-param os_type string
-param variant string
+param os string
 param nsgId string
 param subnetId string
 
 param username string
 @secure()
 param password string
+
+param publisher string
+param offer string
+param sku string
 
 var _os_agents = {
   linux: {
@@ -23,30 +26,13 @@ var _os_agents = {
   }
 }
 
-var _images = {
-  'linux-dev': {
-    publisher: 'Canonical'
-    offer: 'ubuntu-24_04-lts'
-    sku: 'server'
-  }
-  'windows-dev': {
-    publisher: 'MicrosoftVisualStudio'
-    offer: 'visualstudioplustools'
-    sku: 'vs-2022-pro-general-win11-m365-gen2'
-  }
-  'windows-core': {
-    publisher: 'MicrosoftWindowsServer'
-    offer: 'WindowsServer'
-    sku: '2022-datacenter-core'
-  }
-}
 
 resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
-  name: os_type
+  name: os
   location: location
   properties: {
     osProfile: {
-      computerName: os_type
+      computerName: os
       adminUsername: username
       adminPassword: password
       allowExtensionOperations: true
@@ -57,9 +43,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
     }
     storageProfile: {
       imageReference: {
-        publisher: _images['${os_type}-${variant}'].publisher
-        offer: _images['${os_type}-${variant}'].offer
-        sku: _images['${os_type}-${variant}'].sku
+        publisher: publisher
+        offer: offer
+        sku: sku
         version: 'latest'
       }
       osDisk: {
@@ -147,8 +133,8 @@ resource vm_monitor_agent 'Microsoft.Compute/virtualMachines/extensions@2021-11-
   location: location
   properties: {
     publisher: 'Microsoft.Azure.Monitor'
-    type: _os_agents[os_type].monitor_agent_type
-    typeHandlerVersion: _os_agents[os_type].monitor_agent_version
+    type: _os_agents[os].monitor_agent_type
+    typeHandlerVersion: _os_agents[os].monitor_agent_version
     autoUpgradeMinorVersion: true
     enableAutomaticUpgrade: true
     settings: {
@@ -168,8 +154,8 @@ resource vm_security_agent 'Microsoft.Compute/virtualMachines/extensions@2021-11
   ]
   properties: {
     publisher: 'Microsoft.Azure.Security.Monitoring'
-    type: _os_agents[os_type].security_agent_type
-    typeHandlerVersion: _os_agents[os_type].security_agent_version
+    type: _os_agents[os].security_agent_type
+    typeHandlerVersion: _os_agents[os].security_agent_version
     autoUpgradeMinorVersion: true
     enableAutomaticUpgrade: true
     settings: {}

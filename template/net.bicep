@@ -1,5 +1,5 @@
 param location string
-param os_type string
+param os string
 param login_ip string
 
 var _login = {
@@ -24,7 +24,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
           direction: 'Inbound'
           protocol: 'Tcp'
           destinationAddressPrefix: '*'
-          destinationPortRange: _login[os_type].port
+          destinationPortRange: _login[os].port
           sourceAddressPrefixes: [
             login_ip
           ]
