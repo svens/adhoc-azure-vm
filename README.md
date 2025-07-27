@@ -17,7 +17,7 @@ az login --use-device-code
 
 2. **Install required tools**:
    - Azure CLI (`az`)
-   - CMake (3.20 or higher)
+   - CMake (3.10 or higher)
    - Your favorite build system (Ninja used in this example)
    - SSH client
 
