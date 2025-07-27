@@ -9,9 +9,9 @@ param password string
 
 var _images = {
   'linux-dev': {
-    publisher: 'Canonical'
-    offer: 'ubuntu-24_04-lts'
-    sku: 'server'
+    publisher: 'MicrosoftCBLMariner'
+    offer: 'azure-linux-3'
+    sku: 'azure-linux-3-gen2'
   }
   'windows-dev': {
     publisher: 'MicrosoftVisualStudio'

@@ -26,6 +26,9 @@ var _os_agents = {
   }
 }
 
+var cloud_init_0 = loadTextContent('cloud-init.yaml')
+var cloud_init_1 = replace(cloud_init_0, '__USER__', username)
+var cloud_init = replace(cloud_init_1, '__SSH_KEY__', loadTextContent('ssh_key.pub'))
 
 resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
   name: os
@@ -36,7 +39,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
       adminUsername: username
       adminPassword: password
       allowExtensionOperations: true
-      customData: loadFileAsBase64('cloud-init.yaml')
+      customData: base64(cloud_init)
     }
     hardwareProfile: {
       vmSize: 'Standard_F4s_v2'

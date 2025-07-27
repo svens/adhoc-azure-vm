@@ -1,10 +1,12 @@
-# Loadtesting cluster creation in Azure
+# Ad-hoc Azure VM deployment
 
-Azure Infrastructure as Code (IaC) project for deploying load testing clusters using Azure Bicep templates. Creates VM clusters with dual-stack networking (IPv4/IPv6) in Azure, designed for quick deployment and management of development environments.
+Azure Infrastructure as Code (IaC) project for deploying ad-hoc development VMs using Azure Bicep templates. Creates individual VMs with dual-stack networking (IPv4/IPv6) in Azure, designed for quick deployment and management of development environments.
 
 ## Prerequisites
 
-Before running any commands, authenticate with Azure:
+Before running any commands:
+
+1. Authenticate with Azure:
 ```bash
 # From Intune managed machine
 az login
@@ -12,6 +14,17 @@ az login
 # From non-Intune machine
 az login --use-device-code
 ```
+
+2. Create SSH key file:
+```bash
+# Generate SSH key pair if you don't have one
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/azure_vm
+
+# Copy public key to template directory
+cp ~/.ssh/azure_vm.pub template/ssh_key.pub
+```
+
+**Note**: The `template/ssh_key.pub` file is required before deployment and will be injected into the VM for SSH access.
 
 ## Architecture
 
@@ -32,35 +45,58 @@ az login --use-device-code
 - Azure Monitor agent integration
 
 ### Resource Naming Convention
-- Resource Group: `{username}-{os}-{variant}`
+- Resource Group: `<prefix>-<os>-<variant>` (e.g., `myproject-linux-dev`)
 - Location: Hard-coded to `northeurope`
 - VM Names: Based on OS type specification
 
 ### Supported Variants
-- `linux-dev`: Ubuntu 24.04 LTS with development tools
+- `linux-dev`: Azure Linux 3 (CBL-Mariner) with development tools
 - `windows-dev`: Windows 11 with Visual Studio 2022 Professional
 - `windows-core`: Windows Server 2022 Core Datacenter (headless)
 
+### VM Configuration
+- VM Size: Standard F4s_v2 with accelerated networking
+- SSH authentication only (password auth disabled for Linux)
+- Azure Monitor and Security agents automatically installed
+- Dual-stack networking (IPv4/IPv6 public IPs)
+- Network access restricted to deployer's public IP
+
 ## Commands
 
-All scripts accept variant parameters:
+All scripts accept resource name in `<prefix>-<os>-<variant>` format:
 
 ```bash
-./validate [linux-dev|windows-dev|windows-core]    # Validate Bicep template syntax
-./deploy [linux-dev|windows-dev|windows-core]      # Deploy cluster infrastructure
-./show [linux-dev|windows-dev|windows-core]        # Display VM public IP addresses
-./passwd [linux-dev|windows-dev|windows-core]      # Update VM passwords interactively
-./start [linux-dev|windows-dev|windows-core]       # Start all VMs in cluster
-./stop [linux-dev|windows-dev|windows-core]        # Stop VMs (billing continues)
-./deallocate [linux-dev|windows-dev|windows-core]  # Deallocate VMs (stops billing)
+./validate myproject-linux-dev     # Validate Bicep template syntax
+./deploy myproject-linux-dev       # Deploy VM infrastructure  
+./show myproject-linux-dev         # Display VM public IP addresses
+./passwd myproject-linux-dev       # Update VM passwords interactively
+./start myproject-linux-dev        # Start VM
+./stop myproject-linux-dev         # Stop VM (billing continues)
+./deallocate myproject-linux-dev   # Deallocate VM (stops billing)
 ```
+
+**Examples**:
+- `./deploy personal-linux-dev`
+- `./deploy testing-windows-dev`
+- `./deploy prod-windows-core`
 
 ## Development Environment Setup
 
-The cloud-init configuration automatically installs:
-- Build tools: build-essential, cmake, ninja-build
-- Development tools: git, vim, zsh
-- Custom shell configuration with aliases
+### Linux VMs (Azure Linux 3)
+The parameterized cloud-init configuration automatically:
+- Installs packages: build-essential, cmake, ninja-build, git, vim, zsh, tmux
+- Configures user account with SSH key from `template/ssh_key.pub`
+- Sets up zsh with custom aliases and environment variables
+- Disables SSH password authentication
+- Grants sudo access without password
+
+### Windows VMs
+Pre-configured with Visual Studio 2022 Professional (windows-dev) or Server Core (windows-core).
+
+### Agent Installation
+All VMs automatically receive:
+- **Azure Monitor Agent**: System monitoring and telemetry
+- **Azure Security Agent**: Security monitoring and compliance
 
 ## Important Notes
 
@@ -75,3 +111,11 @@ The cloud-init configuration automatically installs:
 
 ### Template Validation
 Always run `./validate` before `./deploy` to check Bicep syntax and parameter validation.
+
+### SSH Access
+For Linux VMs, connect using:
+```bash
+ssh -i ~/.ssh/azure_vm username@<vm-public-ip>
+```
+
+Where `username` is your local username and the VM IP is shown by `./show`.
