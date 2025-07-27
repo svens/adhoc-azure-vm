@@ -57,8 +57,8 @@ write_files:
     zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}'
 
 users:
-- name: __USER__
+- name: @VM_USERNAME@
   shell: /bin/zsh
   sudo: ALL=(ALL) NOPASSWD:ALL
   ssh_authorized_keys:
-  - __SSH_KEY__
+  - @VM_SSH_KEY@

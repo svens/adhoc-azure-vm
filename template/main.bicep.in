@@ -1,9 +1,5 @@
 targetScope = 'subscription'
 
-param location string = 'northeurope'
-param resource string
-param login_ip string
-param username string
 @secure()
 param password string
 
@@ -25,37 +21,25 @@ var _images = {
   }
 }
 
-var _resource_parts = split(resource, '-')
-var _os = toLower(_resource_parts[1])
-var _variant = toLower(_resource_parts[2])
-var _os_type = '${_os}-${_variant}'
-
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: resource
-  location: location
+  name: '@VM_RESOURCE@'
+  location: '@VM_LOCATION@'
 }
 
 module net './net.bicep' = {
   name: 'net'
   scope: rg
-  params: {
-    location: location
-    os: _os
-    login_ip: login_ip
-  }
 }
 
 module vm './vm.bicep' = {
-  name: _os_type
+  name: '@VM_OS@-@VM_VARIANT@'
   scope: rg
   params: {
-    location: location
-    os: _os
-    username: username
+    username: '@VM_USERNAME@'
     password: password
-    publisher: _images[_os_type].publisher
-    offer: _images[_os_type].offer
-    sku: _images[_os_type].sku
+    publisher: _images['@VM_OS@-@VM_VARIANT@'].publisher
+    offer: _images['@VM_OS@-@VM_VARIANT@'].offer
+    sku: _images['@VM_OS@-@VM_VARIANT@'].sku
     nsgId: net.outputs.nsgId
     subnetId: net.outputs.subnetId
   }

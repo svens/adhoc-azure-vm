@@ -1,7 +1,3 @@
-param location string
-param os string
-param login_ip string
-
 var _login = {
   linux: {
     port: '22'
@@ -13,7 +9,7 @@ var _login = {
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   name: 'nsg'
-  location: location
+  location: '@VM_LOCATION@'
   properties: {
     securityRules: [
       {
@@ -24,9 +20,9 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
           direction: 'Inbound'
           protocol: 'Tcp'
           destinationAddressPrefix: '*'
-          destinationPortRange: _login[os].port
+          destinationPortRange: _login.@VM_OS@.port
           sourceAddressPrefixes: [
-            login_ip
+            '@VM_LOGIN_IP@'
           ]
           sourcePortRange: '*'
         }
@@ -38,7 +34,7 @@ output nsgId string = resourceId(resourceGroup().name, 'Microsoft.Network/networ
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = {
   name: 'vnet'
-  location: location
+  location: '@VM_LOCATION@'
   properties: {
     addressSpace: {
       addressPrefixes: [
