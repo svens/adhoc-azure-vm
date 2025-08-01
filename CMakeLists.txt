@@ -2,21 +2,27 @@ cmake_minimum_required(VERSION 3.10)
 project(adhoc-azure-vm NONE)
 
 # command line settings
-if(NOT DEFINED VM_USERNAME)
-	set(VM_USERNAME "$ENV{USER}" CACHE STRING "Username")
+if(NOT VM_PROJECT)
+	set(VM_PROJECT "$ENV{USER}")
 endif()
-if(NOT DEFINED VM_PROJECT)
-	set(VM_PROJECT "$ENV{USER}" CACHE STRING "Project name")
+if(NOT VM_USER)
+	set(VM_USER "$ENV{USER}")
 endif()
-if(NOT DEFINED VM_OS)
-	set(VM_OS "linux" CACHE STRING "Operating system (linux/windows)")
+if(NOT VM_OS)
+	set(VM_OS "linux")
 endif()
-if(NOT DEFINED VM_VARIANT)
-	set(VM_VARIANT "dev" CACHE STRING "Variant (dev/core)")
+if(NOT VM_VARIANT)
+	set(VM_VARIANT "dev")
 endif()
-if(NOT DEFINED VM_LOCATION)
-	set(VM_LOCATION "northeurope" CACHE STRING "Azure location")
+if(NOT VM_LOCATION)
+	set(VM_LOCATION "northeurope")
 endif()
+
+set(VM_PROJECT "${VM_PROJECT}" CACHE STRING "Project name")
+set(VM_USER "${VM_USER}" CACHE STRING "Username")
+set(VM_OS "${VM_OS}" CACHE STRING "Operating system (linux/windows)")
+set(VM_VARIANT "${VM_VARIANT}" CACHE STRING "Variant (dev/core)")
+set(VM_LOCATION "${VM_LOCATION}" CACHE STRING "Azure location")
 
 # derived settings
 set(VM_RESOURCE "${VM_PROJECT}-${VM_OS}-${VM_VARIANT}" CACHE STRING "Resource name")
@@ -78,6 +84,7 @@ if(NOT DEFINED VM_IP)
 	string(RANDOM LENGTH 20 ALPHABET "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*" DEPLOY_PASSWORD)
 	execute_process(
 		COMMAND az deployment sub create
+			--name "${VM_LOCATION}-vm-deployment"
 			--template-file "${CMAKE_CURRENT_BINARY_DIR}/template/main.bicep"
 			--location "${VM_LOCATION}"
 			--parameters password=${DEPLOY_PASSWORD}
@@ -113,13 +120,27 @@ if(NOT DEFINED VM_IP)
 			"VM_VARIANT=${VM_VARIANT}\n"
 			"VM_RESOURCE=${VM_RESOURCE}\n"
 			"VM_LOCATION=${VM_LOCATION}\n"
-			"VM_USERNAME=${VM_USERNAME}\n"
+			"VM_USER=${VM_USER}\n"
 			"VM_LOGIN_IP=${VM_LOGIN_IP}\n"
 			"VM_IP=${VM_IP}\n"
 			"VM_IDS=${VM_IDS}\n"
 			"SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}\n"
 			"SSH_PUBLIC_KEY=${SSH_PUBLIC_KEY}\n"
 		)
+
+		# Generate SSH/RDP configs
+		configure_file(
+			"${CMAKE_SOURCE_DIR}/connection/ssh_config.in"
+			"${CMAKE_CURRENT_BINARY_DIR}/ssh_config"
+			@ONLY
+		)
+		if(VM_OS STREQUAL "windows")
+			configure_file(
+				"${CMAKE_SOURCE_DIR}/connection/rdp.in"
+				"${CMAKE_CURRENT_BINARY_DIR}/${VM_PROJECT}.rdp"
+				@ONLY
+			)
+		endif()
 
 		message(STATUS "VM[${VM_IDS}] deployed with IP: ${VM_IP}")
 	else()
@@ -136,7 +157,7 @@ add_custom_target(rm
 
 add_custom_target(passwd
 	COMMAND ${CMAKE_COMMAND}
-		-DVM_USERNAME=${VM_USERNAME}
+		-DVM_USER=${VM_USER}
 		-DVM_IDS=${VM_IDS}
 		-P "${CMAKE_SOURCE_DIR}/scripts/update_password.cmake"
 	COMMENT "Generate and set new random VM password"
@@ -151,12 +172,6 @@ add_custom_target(start
 add_custom_target(stop
 	COMMAND az vm stop --ids ${VM_IDS}
 	COMMENT "Stop VM"
-)
-
-add_custom_target(login
-	COMMAND ssh -i "${SSH_PRIVATE_KEY}" -o StrictHostKeyChecking=no ${VM_USERNAME}@${VM_IP}
-	COMMENT "SSH into VM"
-	USES_TERMINAL
 )
 
 add_custom_target(show

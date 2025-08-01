@@ -1,7 +1,7 @@
 string(RANDOM LENGTH 20 ALPHABET "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*" NEW_PASSWORD)
 execute_process(
 	COMMAND az vm user update
-		--username ${VM_USERNAME}
+		--username ${VM_USER}
 		--password ${NEW_PASSWORD}
 		--ids ${VM_IDS}
 	RESULT_VARIABLE UPDATE_RESULT

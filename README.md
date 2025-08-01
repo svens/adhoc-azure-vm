@@ -31,7 +31,6 @@ cmake .. -DVM_PROJECT=myproject -DVM_OS=linux -DVM_VARIANT=dev -G Ninja
 # VM is automatically deployed during cmake configure step
 # Use ninja targets for VM management:
 ninja show     # Show all VM properties
-ninja login    # SSH into the VM
 ninja passwd   # Generate new random password
 ninja start    # Start VM
 ninja stop     # Stop VM
@@ -45,17 +44,17 @@ Configure your deployment with CMake variables:
 ```bash
 cmake .. -G Ninja \
   -DVM_PROJECT=myproject \
+  -DVM_USER=myuser \
   -DVM_OS=linux \
   -DVM_VARIANT=dev \
-  -DVM_USERNAME=myuser \
   -DVM_LOCATION=eastus
 ```
 
 ### Available Options
 - **VM_PROJECT**: Project name (default: `$USER`)
+- **VM_USER**: VM username (default: `$USER`)
 - **VM_OS**: Operating system - `linux` or `windows` (default: `linux`)
 - **VM_VARIANT**: Variant - `dev` or `core` (default: `dev`)
-- **VM_USERNAME**: VM username (default: `$USER`)
 - **VM_LOCATION**: Azure region (default: `northeurope`)
 
 ### Derived Settings

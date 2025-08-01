@@ -35,7 +35,7 @@ module vm './vm.bicep' = {
   name: '@VM_OS@-@VM_VARIANT@'
   scope: rg
   params: {
-    username: '@VM_USERNAME@'
+    username: '@VM_USER@'
     password: password
     publisher: _images['@VM_OS@-@VM_VARIANT@'].publisher
     offer: _images['@VM_OS@-@VM_VARIANT@'].offer
